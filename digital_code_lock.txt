@@ -1,0 +1,154 @@
+	      MVI A, 81H
+	      OUT 43H
+	      MVI A, 03H
+	      STA D000H
+	      LXI D, B001H
+	      MVI A,00H
+	      OUT 42H
+Back/No_Key:  IN 42H
+	      ANI 0FH
+	      CPI OFH
+	      JZ 8010H (No_Key)
+	      CALL A000H (Delay_5ms)
+	      IN 42H
+	      ANI OFH
+	      CPI OFH
+	      JZ 8010H (No_Key)
+	      CALL 8100H (Key_Check)
+	      MVI A,00H
+	      OUT 42H
+Still_Pressed:IN 42H
+	      ANI 0FH
+	      CPI OFH
+	      JNZ  802CH (Still_Pressed)
+	      CALL A000H (Delay_5ms)
+	      JMP 8010H (Back)
+Key_Check:    LXI H,9000H
+	      MVI B ,77H
+Next_Row/Again:MOV A,B
+	      OUT 42H
+	      IN 42H
+	      MVI C,04H
+Next_Column:  RRC
+	      JNC 8200H (Key_Found)
+	      INX H
+	      DCR C
+	      JNZ 810CH (Next_Column)
+	      MOV A,B
+	      RRC
+	      MOV B,A
+	      JMP 8105H (Again)
+
+Key_Found:    MOV A,M
+	      OUT 40H
+	      MVI A,20H
+	      OUT 41H
+	      CALL E000H (Delay_250ms)
+	      MVI A, 00H
+	      OUT 41H
+	      MOV A,M
+	      CPI EDH
+	      JZ 8300H (Reset)
+	      CPI 76H
+	      JZ 8400H (Enter)
+	      STAX D
+	      MOV A,E
+	      STA B000H
+	      INX D
+	      RET
+
+Reset:	      LXI D,B001H
+	      RET
+
+Enter:	      LXI H,C000H
+	      LXI D,B000H
+	      MVI C,05H
+Next_Compare: LDAX  D
+	      CMP M
+	      JNZ 8500H (Wrong)
+	      INX H
+	      INX D
+	      DCR C
+	      JNZ 8408H (Next_Compare)
+	      MVI A,36H
+	      OUT 40H
+	      MVI A,04H
+	      OUT 41H
+	      CALL E000H (Delay_250ms)
+	      MVI A,00H
+	      OUT 41H
+	      LXI D,B001H
+	      RET
+Reset:	      LXI D,B001H
+	      RET
+
+Enter:	      LXI H,C000H
+	      LXI D,B000H
+	      MVI C,05H
+Next_Compare: LDAX  D
+	      CMP M
+	      JNZ 8500H (Wrong)
+	      INX H
+	      INX D
+	      DCR C
+	      JNZ 8408H (Next_Compare)
+	      MVI A,36H
+	      OUT 40H
+	      MVI A,04H
+	      OUT 41H
+	      CALL E000H (Delay_250ms)
+	      MVI A,00H
+	      OUT 41H
+	      LXI D,B001H
+	      RET
+
+Wrong:	      MVI A,09H
+	      OUT 40H
+	      MVI A,10H
+	      OUT 41H
+	      CALL E000H (Delay_250ms)
+	      MVI A,00H
+	      OUT 41H
+	      LDA D000H
+	      DCR A
+	      STA D000H
+	      JZ 8600H (Shutdown)
+	      JMP 8300H (Reset)
+
+Shutdown:     MVI A,20H
+	      OUT 41H
+	      RST 3
+
+Delay_5ms:    PUSH H
+	      PUSH PSW
+	      LXI H,0355H
+Again:	      NOP
+	      NOP
+	      NOP
+	      DCX H
+	      MOV A,L
+	      ORA H
+	      JNZ A005H (Again)
+	      POP PSW
+	      POP H
+	      RET
+
+Delay_250ms:  PUSH H
+	      PUSH PSW
+	      LXI H,5345H
+Again 2:      NOP
+	      NOP
+	      NOP
+	      DCX H
+	      MOV A,L
+	      ORA  H
+	      JNZ E005H (Again 2)
+	      POP PSW
+	      POP H
+	      RET
+
+
+
+
+
+  
